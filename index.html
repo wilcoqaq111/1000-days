@@ -1659,20 +1659,28 @@
             return `${yyyy}-${mm}-${dd}`;
         }
 
-        // 用 fetch HEAD 检测文件是否存在（HTTP），fallback 到 Image/Audio/Video
+        // 检测图片是否存在（返回 boolean，用于 detectAndRenderMedia）
+        function imageExists(url) {
+            return fileExists(url).then(() => true).catch(() => false);
+        }
+
+        // 检测文件是否存在：存在则 resolve，不存在则 reject（配合 Promise.any 使用）
         function fileExists(url) {
-            return new Promise((resolve) => {
+            return new Promise((resolve, reject) => {
                 // 先用 fetch HEAD 快速检测 (适用于 HTTP/HTTPS)
                 fetch(url, { method: 'HEAD' }).then(r => {
-                    resolve(r.ok);
+                    if (r.ok) resolve(true);
+                    else reject(new Error('404'));
                 }).catch(() => {
                     // file:// 协议下 fetch 被禁，用 Image 探测
                     const img = new Image();
-                    img.onload = () => resolve(true);
-                    img.onerror = () => resolve(false);
+                    const tid = setTimeout(() => {
+                        img.src = '';
+                        reject(new Error('timeout'));
+                    }, 4000);
+                    img.onload = () => { clearTimeout(tid); resolve(true); };
+                    img.onerror = () => { clearTimeout(tid); reject(new Error('not found')); };
                     img.src = url;
-                    // 超时保护
-                    setTimeout(() => resolve(false), 5000);
                 });
             });
         }
@@ -1681,23 +1689,23 @@
         async function dayHasPhoto(day, dateStr) {
             // 主命名：photos/2023-10-23-1.{ext}
             const mainChecks = PHOTO_EXTS.map(ext =>
-                fileExists(`photos/${dateStr}-1.${ext}`).then(ok => ok ? `main:${ext}` : null)
+                fileExists(`photos/${dateStr}-1.${ext}`).then(() => true)
             );
             // 旧格式：photos/day{N}-1.{ext} 和 photos/day{N}.{ext}
             const oldChecks = PHOTO_EXTS.map(ext =>
-                fileExists(`photos/day${day}-1.${ext}`).then(ok => ok ? `old1:${ext}` : null)
+                fileExists(`photos/day${day}-1.${ext}`).then(() => true)
             );
             const oldSingleChecks = PHOTO_EXTS.map(ext =>
-                fileExists(`photos/day${day}.${ext}`).then(ok => ok ? `old2:${ext}` : null)
+                fileExists(`photos/day${day}.${ext}`).then(() => true)
             );
 
-            // 三组并行，组内也并行
-            const results = await Promise.all([
-                Promise.any(mainChecks).catch(() => null),
-                Promise.any(oldChecks).catch(() => null),
-                Promise.any(oldSingleChecks).catch(() => null),
+            // 三组并行竞争，任一组有结果即返回
+            const results = await Promise.allSettled([
+                Promise.any(mainChecks),
+                Promise.any(oldChecks),
+                Promise.any(oldSingleChecks),
             ]);
-            return results.some(r => r !== null);
+            return results.some(r => r.status === 'fulfilled');
         }
 
         // 自动扫描所有有照片的天数（并行优化版）
