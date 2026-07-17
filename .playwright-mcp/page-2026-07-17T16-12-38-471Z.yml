@@ -1,0 +1,123 @@
+- generic [active] [ref=f2e1]:
+  - generic [ref=f2e2]:
+    - generic:
+      - generic: 💕
+      - generic: ❤️
+      - generic: 💖
+      - generic: 💗
+      - generic: ✨
+      - generic: ⭐
+      - generic: 🌟
+      - generic: 💫
+      - generic: 🌹
+      - generic: 🕊️
+      - generic: 🌷
+      - generic: 🌺
+      - generic: 💐
+      - generic: 🎀
+      - generic: 💝
+      - generic: 💕
+      - generic: ❤️
+      - generic: 💖
+      - generic: 💗
+      - generic: ✨
+      - generic: ⭐
+      - generic: 🌟
+      - generic: 💫
+      - generic: 🌹
+      - generic: 🕊️
+      - generic: 🌷
+      - generic: 🌺
+      - generic: 💐
+      - generic: 🎀
+      - generic: 💝
+      - generic: 💕
+      - generic: ❤️
+      - generic: 💖
+      - generic: 💗
+      - generic: ✨
+      - generic: ⭐
+      - generic: 🌟
+      - generic: 💫
+      - generic: 🌹
+      - generic: 🕊️
+      - generic: 🌷
+      - generic: 🌺
+      - generic: 💐
+      - generic: 🎀
+      - generic: 💝
+      - generic: 💕
+      - generic: ❤️
+      - generic: 💖
+      - generic: 💗
+      - generic: ✨
+    - generic [ref=f2e3]:
+      - generic [ref=f2e4]: 我们的1000天 ❤️
+      - generic [ref=f2e5]: 每一天都值得纪念
+      - button "开 启 回 忆" [ref=f2e6] [cursor=pointer]
+  - generic:
+    - generic: 🌻
+    - generic: 🌼
+    - generic: 🌺
+    - generic: 🏵️
+    - generic: 💐
+    - generic: ✨
+    - generic: 🌟
+    - generic: 🌞
+    - generic: 🍃
+    - generic: 💛
+    - generic: 🌻
+    - generic: 🌼
+    - generic: 🌺
+    - generic: 🏵️
+    - generic: 💐
+    - generic: ✨
+    - generic: 🌟
+    - generic: 🌞
+    - generic: 🍃
+    - generic: 💛
+    - generic: 🌻
+    - generic: 🌼
+    - generic: 🌺
+    - generic: 🏵️
+    - generic: 💐
+    - generic: ✨
+    - generic: 🌟
+    - generic: 🌞
+    - generic: 🍃
+    - generic: 💛
+    - generic: 🌻
+    - generic: 🌼
+    - generic: 🌺
+    - generic: 🏵️
+    - generic: 💐
+    - generic: ✨
+    - generic: 🌟
+    - generic: 🌞
+    - generic: 🍃
+    - generic: 💛
+    - generic: 🌻
+    - generic: 🌼
+    - generic: 🌺
+    - generic: 🏵️
+    - generic: 💐
+  - generic [ref=f2e7]:
+    - generic [ref=f2e8]:
+      - generic [ref=f2e9]: 💕 我们已经在一起
+      - generic [ref=f2e10]: 999天 00小时 12分 37秒
+    - heading "我们在一起的" [level=2] [ref=f2e11]
+    - generic [ref=f2e12]: 第 1 天
+    - generic [ref=f2e14]:
+      - button "◀ 前一天" [ref=f2e15] [cursor=pointer]
+      - button "后一天 ▶" [ref=f2e16] [cursor=pointer]
+    - generic [ref=f2e17]:
+      - spinbutton "输入天数..." [ref=f2e18]
+      - button "跳转" [ref=f2e19] [cursor=pointer]
+    - generic [ref=f2e20]:
+      - button "💕 第 1 天" [ref=f2e21] [cursor=pointer]
+      - button "💯 第 100 天" [ref=f2e22] [cursor=pointer]
+      - button "🎂 一周年" [ref=f2e23] [cursor=pointer]
+      - button "💕 两周年" [ref=f2e24] [cursor=pointer]
+      - button "💍 第 1000 天" [ref=f2e25] [cursor=pointer]
+    - generic [ref=f2e26]: 1000天的旅程，你已经走过了 0.1%
+    - button "🔊 暂停音乐" [ref=f2e30] [cursor=pointer]
