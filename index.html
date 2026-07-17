@@ -22,6 +22,9 @@
             justify-content: center;
             min-height: 100vh;
             text-align: center;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-text-size-adjust: 100%;
         }
         button, .nav-btn, .milestone-btn, .bgm-control, .jump-btn, .cover-btn, .camera-btn, .retake-btn, .letter-nav-btn, .letter-back-btn, .camera-switch-btn, .camera-close-btn {
             font-family: var(--font-btn);
@@ -30,23 +33,35 @@
             background: rgba(255, 255, 255, 0.75);
             backdrop-filter: blur(16px);
             border-radius: 28px;
-            padding: 24px 28px 20px;
-            max-width: 560px;
-            width: 520px;
+            padding: 20px 16px 16px;
+            width: 92%;
+            max-width: 520px;
             box-shadow: 0 8px 40px rgba(200, 120, 150, 0.25),
                         0 2px 8px rgba(180, 120, 140, 0.15);
             border: 1.5px solid rgba(255, 255, 255, 0.6);
+            box-sizing: border-box;
+        }
+        @media (min-width: 500px) {
+            .main-card {
+                padding: 24px 28px 20px;
+            }
         }
         .day-number {
-            font-size: 3.8rem;
+            font-size: 2.6rem;
             font-weight: bold;
             background: linear-gradient(135deg, #e91e63, #f06292, #f48fb1);
             -webkit-background-clip: text;
             background-clip: text;
             -webkit-text-fill-color: transparent;
-            margin: 10px 0;
+            margin: 8px 0;
             padding: 0 8px;
             display: inline-block;
+        }
+        @media (min-width: 500px) {
+            .day-number {
+                font-size: 3.8rem;
+                margin: 10px 0;
+            }
         }
         /* ===== 相框基础 ===== */
         .media-box {
@@ -230,11 +245,16 @@
         .carousel-slide {
             flex: 0 0 100%;
             min-width: 0;
-            height: 370px;
+            height: 280px;
             display: flex;
             align-items: center;
             justify-content: center;
             transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+        @media (min-width: 500px) {
+            .carousel-slide {
+                height: 370px;
+            }
         }
         .carousel-slide img, .carousel-slide video {
             width: 100%;
@@ -262,13 +282,13 @@
             position: absolute;
             top: 50%;
             transform: translateY(-50%);
-            background: rgba(255,255,255,0.8);
+            background: rgba(255,255,255,0.85);
             border: none;
             color: #d81b60;
-            width: 36px;
-            height: 36px;
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
-            font-size: 0.95rem;
+            font-size: 1rem;
             cursor: pointer;
             z-index: 5;
             transition: 0.3s;
@@ -276,6 +296,7 @@
             align-items: center;
             justify-content: center;
             box-shadow: 0 2px 8px rgba(180,100,130,0.2);
+            -webkit-tap-highlight-color: transparent;
         }
         .carousel-arrow:hover {
             background: #fff;
@@ -315,14 +336,21 @@
             background: linear-gradient(135deg, #f06292, #e91e63);
             border: none;
             color: white;
-            padding: 14px 30px;
+            padding: 12px 18px;
             border-radius: 40px;
-            font-size: 1.1rem;
+            font-size: 0.95rem;
             cursor: pointer;
             transition: 0.3s;
             min-height: 40px;
-            min-width: 120px;
+            min-width: 100px;
             box-shadow: 0 4px 15px rgba(233,30,99,0.3);
+        }
+        @media (min-width: 500px) {
+            .nav-btn {
+                padding: 14px 30px;
+                font-size: 1.1rem;
+                min-width: 120px;
+            }
         }
         .nav-btn:hover {
             background: linear-gradient(135deg, #f48fb1, #f06292);
@@ -343,17 +371,24 @@
             gap: 8px;
         }
         .jump-box input {
-            width: 130px;
-            padding: 10px 12px;
+            width: 110px;
+            padding: 10px 8px;
             border-radius: 24px;
             border: 1.5px solid rgba(233,30,99,0.2);
             background: rgba(255,255,255,0.7);
             color: #5d3a4a;
             text-align: center;
-            font-size: 1rem;
+            font-size: 0.95rem;
             min-height: 40px;
             box-sizing: border-box;
             font-family: inherit;
+        }
+        @media (min-width: 500px) {
+            .jump-box input {
+                width: 130px;
+                padding: 10px 12px;
+                font-size: 1rem;
+            }
         }
         .jump-box input::placeholder {
             color: #c4a8b2;
@@ -386,13 +421,20 @@
             background: rgba(255,255,255,0.7);
             border: 1.5px solid rgba(233,30,99,0.2);
             color: #d81b60;
-            padding: 10px 14px;
+            padding: 8px 10px;
             border-radius: 24px;
             cursor: pointer;
-            font-size: 0.95rem;
+            font-size: 0.82rem;
             transition: 0.3s;
-            min-height: 40px;
+            min-height: 36px;
             white-space: nowrap;
+        }
+        @media (min-width: 500px) {
+            .milestone-btn {
+                padding: 10px 14px;
+                font-size: 0.95rem;
+                min-height: 40px;
+            }
         }
         .milestone-btn:hover {
             background: rgba(233,30,99,0.08);
@@ -452,10 +494,15 @@
             background: linear-gradient(135deg, rgba(255,255,255,0.6), rgba(255,240,245,0.6));
             border: 1.5px solid rgba(233,30,99,0.15);
             border-radius: 20px;
-            padding: 10px 20px;
+            padding: 8px 14px;
             margin-bottom: 10px;
             box-shadow: 0 2px 12px rgba(200,120,150,0.15);
             transition: opacity 0.8s ease;
+        }
+        @media (min-width: 500px) {
+            .love-timer {
+                padding: 10px 20px;
+            }
         }
         .love-timer .timer-label {
             font-size: 0.95rem;
@@ -464,11 +511,16 @@
             letter-spacing: 2px;
         }
         .love-timer .timer-value {
-            font-size: 1.5rem;
+            font-size: 1.15rem;
             font-weight: bold;
             background: linear-gradient(135deg, #e91e63, #f06292, #f48fb1);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+        }
+        @media (min-width: 500px) {
+            .love-timer .timer-value {
+                font-size: 1.5rem;
+            }
         }
 
         /* ========== 封面页 ========== */
@@ -523,13 +575,18 @@
             padding: 20px;
         }
         .cover-title {
-            font-size: 3.2rem;
+            font-size: 2.2rem;
             font-weight: bold;
             background: linear-gradient(135deg, #e91e63, #f06292, #d81b60);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             margin-bottom: 10px;
             animation: titleGlow 2s ease-in-out infinite alternate;
+        }
+        @media (min-width: 500px) {
+            .cover-title {
+                font-size: 3.2rem;
+            }
         }
         @keyframes titleGlow {
             0% { filter: brightness(1); }
@@ -545,14 +602,20 @@
             background: linear-gradient(135deg, #e91e63, #f06292);
             border: none;
             color: white;
-            padding: 16px 50px;
+            padding: 14px 40px;
             border-radius: 50px;
-            font-size: 1.3rem;
+            font-size: 1.1rem;
             cursor: pointer;
             letter-spacing: 2px;
             box-shadow: 0 0 30px rgba(233,30,99,0.4),
                         0 0 60px rgba(240,98,146,0.2);
             transition: transform 0.3s, box-shadow 0.3s;
+        }
+        @media (min-width: 500px) {
+            .cover-btn {
+                padding: 16px 50px;
+                font-size: 1.3rem;
+            }
         }
         .cover-btn:hover {
             transform: scale(1.05);
@@ -716,13 +779,20 @@
         .letter-modal {
             background: linear-gradient(160deg, #fffafc 0%, #fff0f5 40%, #fef5f8 100%);
             border-radius: 24px;
-            padding: 32px 32px 28px;
+            padding: 24px 18px 20px;
             max-width: 560px;
             width: 92%;
+            max-height: 85vh;
+            overflow-y: auto;
             box-shadow: 0 16px 60px rgba(180, 80, 110, 0.35),
                         0 0 0 1.5px rgba(233,30,99,0.12);
             position: relative;
             animation: letterPop 0.5s ease;
+        }
+        @media (min-width: 500px) {
+            .letter-modal {
+                padding: 32px 32px 28px;
+            }
         }
         @keyframes letterPop {
             0% { transform: scale(0.85) translateY(30px); opacity: 0; }
@@ -955,9 +1025,14 @@
         .framed-photo-wrapper .frame-photo {
             display: block;
             max-width: 100%;
-            max-height: 380px;
+            max-height: 240px;
             border-radius: 2px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        @media (min-width: 500px) {
+            .framed-photo-wrapper .frame-photo {
+                max-height: 380px;
+            }
         }
         /* 相框四角装饰 */
         .frame-corner {
@@ -1020,6 +1095,57 @@
         .letter-nav-btn.hidden {
             display: none !important;
         }
+
+        /* ========== 加载扫描动画 ========== */
+        .loading-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(252, 228, 236, 0.92);
+            backdrop-filter: blur(6px);
+            z-index: 999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.5s ease;
+        }
+        .loading-overlay.done {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .loading-card {
+            text-align: center;
+            padding: 30px;
+        }
+        .loading-spinner {
+            font-size: 3rem;
+            animation: loadBounce 0.8s ease-in-out infinite;
+        }
+        @keyframes loadBounce {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-12px) scale(1.1); }
+        }
+        .loading-text {
+            font-size: 1.1rem;
+            color: #d81b60;
+            margin: 16px 0 14px;
+            font-family: var(--font-btn);
+        }
+        .loading-bar {
+            width: 200px;
+            height: 5px;
+            border-radius: 3px;
+            background: rgba(233,30,99,0.12);
+            overflow: hidden;
+            margin: 0 auto;
+        }
+        .loading-fill {
+            height: 100%;
+            border-radius: 3px;
+            background: linear-gradient(90deg, #f48fb1, #e91e63);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
     </style>
 </head>
 <body>
@@ -1035,6 +1161,15 @@
 
     <!-- 飘落花瓣背景 -->
     <div class="petals-container" id="petalsContainer"></div>
+
+    <!-- 加载扫描动画 -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-card">
+            <div class="loading-spinner">💕</div>
+            <div class="loading-text" id="loadingText">正在寻找回忆...</div>
+            <div class="loading-bar"><div class="loading-fill" id="loadingFill"></div></div>
+        </div>
+    </div>
 
     <div class="main-card">
         <div class="love-timer">
@@ -1524,17 +1659,48 @@
             return `${yyyy}-${mm}-${dd}`;
         }
 
-        // 用 Image 对象检测图片是否存在（兼容 file:// 协议）
-        function imageExists(url) {
+        // 用 fetch HEAD 检测文件是否存在（HTTP），fallback 到 Image/Audio/Video
+        function fileExists(url) {
             return new Promise((resolve) => {
-                const img = new Image();
-                img.onload = () => resolve(true);
-                img.onerror = () => resolve(false);
-                img.src = url;
+                // 先用 fetch HEAD 快速检测 (适用于 HTTP/HTTPS)
+                fetch(url, { method: 'HEAD' }).then(r => {
+                    resolve(r.ok);
+                }).catch(() => {
+                    // file:// 协议下 fetch 被禁，用 Image 探测
+                    const img = new Image();
+                    img.onload = () => resolve(true);
+                    img.onerror = () => resolve(false);
+                    img.src = url;
+                    // 超时保护
+                    setTimeout(() => resolve(false), 5000);
+                });
             });
         }
 
-        // 自动扫描所有有照片的天数
+        // 并行检测当天是否有照片（所有扩展名一起探测）
+        async function dayHasPhoto(day, dateStr) {
+            // 主命名：photos/2023-10-23-1.{ext}
+            const mainChecks = PHOTO_EXTS.map(ext =>
+                fileExists(`photos/${dateStr}-1.${ext}`).then(ok => ok ? `main:${ext}` : null)
+            );
+            // 旧格式：photos/day{N}-1.{ext} 和 photos/day{N}.{ext}
+            const oldChecks = PHOTO_EXTS.map(ext =>
+                fileExists(`photos/day${day}-1.${ext}`).then(ok => ok ? `old1:${ext}` : null)
+            );
+            const oldSingleChecks = PHOTO_EXTS.map(ext =>
+                fileExists(`photos/day${day}.${ext}`).then(ok => ok ? `old2:${ext}` : null)
+            );
+
+            // 三组并行，组内也并行
+            const results = await Promise.all([
+                Promise.any(mainChecks).catch(() => null),
+                Promise.any(oldChecks).catch(() => null),
+                Promise.any(oldSingleChecks).catch(() => null),
+            ]);
+            return results.some(r => r !== null);
+        }
+
+        // 自动扫描所有有照片的天数（并行优化版）
         async function autoScanValidDays() {
             const start = new Date(startDate);
             const today = new Date();
@@ -1542,30 +1708,38 @@
             const maxScan = Math.min(totalDays, 1000);
             const found = [];
 
-            // 分批并行检查，每批 60 天
-            for (let batch = 1; batch <= maxScan; batch += 60) {
-                const batchEnd = Math.min(batch + 59, maxScan);
-                const promises = [];
-                for (let day = batch; day <= batchEnd; day++) {
-                    promises.push((async () => {
-                        // date-based naming: photos/2023-10-23-1.{ext}
-                        const d = new Date(start);
-                        d.setDate(d.getDate() + day - 1);
-                        const yyyy = d.getFullYear();
-                        const mm = String(d.getMonth() + 1).padStart(2, '0');
-                        const dd = String(d.getDate()).padStart(2, '0');
-                        const dateStr = `${yyyy}-${mm}-${dd}`;
-                        for (const ext of PHOTO_EXTS) {
-                            if (await imageExists(`photos/${dateStr}-1.${ext}`)) { found.push(day); return; }
-                        }
-                        // old naming fallback
-                        for (const ext of PHOTO_EXTS) {
-                            if (await imageExists(`photos/day${day}.${ext}`)) { found.push(day); return; }
-                        }
-                    })());
-                }
-                await Promise.all(promises);
+            // 预计算所有天的日期字符串
+            const dayInfo = [];
+            for (let day = 1; day <= maxScan; day++) {
+                const d = new Date(start);
+                d.setDate(d.getDate() + day - 1);
+                const yyyy = d.getFullYear();
+                const mm = String(d.getMonth() + 1).padStart(2, '0');
+                const dd = String(d.getDate()).padStart(2, '0');
+                dayInfo.push({ day, dateStr: `${yyyy}-${mm}-${dd}` });
             }
+
+            // 分批并行检测，每批 120 天
+            const BATCH = 120;
+            let scanned = 0;
+            const loadingText = document.getElementById('loadingText');
+            const loadingBar = document.getElementById('loadingFill');
+
+            for (let i = 0; i < dayInfo.length; i += BATCH) {
+                const batch = dayInfo.slice(i, i + BATCH);
+                const results = await Promise.all(
+                    batch.map(info => dayHasPhoto(info.day, info.dateStr))
+                );
+                for (let j = 0; j < batch.length; j++) {
+                    if (results[j]) found.push(batch[j].day);
+                }
+                scanned += batch.length;
+                // 更新加载进度
+                const pct = Math.round(scanned / maxScan * 100);
+                if (loadingText) loadingText.textContent = `正在寻找回忆... ${pct}%`;
+                if (loadingBar) loadingBar.style.width = pct + '%';
+            }
+
             found.sort((a, b) => a - b);
             return found;
         }
@@ -1697,7 +1871,7 @@
                     // 已拍过照：显示带相框的照片
                     track.innerHTML = `
                         <div class="carousel-slide">
-                            <div style="height:370px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;">
+                            <div style="height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;">
                                 <div class="framed-photo-wrapper">
                                     <span class="frame-corner frame-corner-tl"></span>
                                     <span class="frame-corner frame-corner-tr"></span>
@@ -1715,7 +1889,7 @@
                     // 还没拍照：显示提示文字 + 拍照按钮
                     track.innerHTML = `
                         <div class="carousel-slide">
-                            <div style="height:370px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#d81b60;font-size:1.05rem;padding:0 20px;gap:10px;max-width:420px;line-height:1.8;text-align:center;">
+                            <div style="height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#d81b60;font-size:1.05rem;padding:0 20px;gap:10px;max-width:420px;line-height:1.8;text-align:center;">
                                 <span>${textDay.text}</span>
                                 <div class="camera-btn-wrap"><button class="camera-btn" onclick="openCamera()" title="拍照">📷</button></div>
                             </div>
@@ -1731,7 +1905,7 @@
                 const fontSize = textDay ? '1.05rem' : '1rem';
                 const color = textDay ? '#d81b60' : '#c4a8b2';
                 const maxWidth = textDay ? 'style="max-width:420px;line-height:1.8;"' : '';
-                track.innerHTML = `<div class="carousel-slide"><div style="height:370px;display:flex;align-items:center;justify-content:center;color:${color};font-size:${fontSize};padding:0 20px;" ${maxWidth}>${msg}</div></div>`;
+                track.innerHTML = `<div class="carousel-slide"><div style="height:100%;display:flex;align-items:center;justify-content:center;color:${color};font-size:${fontSize};padding:0 20px;" ${maxWidth}>${msg}</div></div>`;
                 prevBtn.classList.add('hidden');
                 nextBtn.classList.add('hidden');
                 return;
@@ -1763,7 +1937,7 @@
                                         hint = '⚠️ 视频无法播放（错误码: ' + err.code + '）';
                                 }
                             }
-                            slide.innerHTML = `<div style="height:370px;display:flex;align-items:center;justify-content:center;color:#c4a8b2;font-size:0.95rem;flex-direction:column;gap:8px;">🎬<span>${hint}</span></div>`;
+                            slide.innerHTML = `<div style="height:100%;display:flex;align-items:center;justify-content:center;color:#c4a8b2;font-size:0.95rem;flex-direction:column;gap:8px;">🎬<span>${hint}</span></div>`;
                         });
                     }
                 }
@@ -2361,6 +2535,12 @@
             if (validDays.length > 0) {
                 currentIndex = 0;
                 await updateDay();
+            }
+            // 隐藏加载动画
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            if (loadingOverlay) {
+                loadingOverlay.classList.add('done');
+                setTimeout(() => loadingOverlay.remove(), 600);
             }
         })();
     </script>
