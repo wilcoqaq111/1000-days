@@ -1,0 +1,364 @@
+{
+  "startDate": "2023-10-23",
+  "days": {
+    "1": {
+      "photos": [
+        "photos/2023-10-23-1.PNG"
+      ],
+      "videos": [],
+      "voices": []
+    },
+    "19": {
+      "photos": [
+        "photos/2023-11-10-1.png"
+      ],
+      "videos": [],
+      "voices": []
+    },
+    "28": {
+      "photos": [
+        "photos/2023-11-19-1.png",
+        "photos/2023-11-19-2.png"
+      ],
+      "videos": [],
+      "voices": []
+    },
+    "41": {
+      "photos": [
+        "photos/2023-12-02-1.png",
+        "photos/2023-12-02-2.png",
+        "photos/2023-12-02-3.png"
+      ],
+      "videos": [],
+      "voices": []
+    },
+    "47": {
+      "photos": [
+        "photos/2023-12-08-1.png"
+      ],
+      "videos": [],
+      "voices": []
+    },
+    "75": {
+      "photos": [
+        "photos/2024-01-05-1.png"
+      ],
+      "videos": [],
+      "voices": []
+    },
+    "100": {
+      "photos": [
+        "photos/2024-01-30-1.png"
+      ],
+      "videos": [],
+      "voices": []
+    },
+    "106": {
+      "photos": [
+        "photos/2024-02-05-1.jpg",
+        "photos/2024-02-05-2.jpg"
+      ],
+      "videos": [],
+      "voices": []
+    },
+    "126": {
+      "photos": [
+        "photos/2024-02-25-1.png",
+        "photos/2024-02-25-2.jpg",
+        "photos/2024-02-25-3.png"
+      ],
+      "videos": [],
+      "voices": []
+    },
+    "128": {
+      "photos": [
+        "photos/2024-02-27-1.png",
+        "photos/2024-02-27-2.png",
+        "photos/2024-02-27-3.png"
+      ],
+      "videos": [
+        "videos/2024-02-27-1.mp4"
+      ],
+      "voices": []
+    },
+    "135": {
+      "photos": [
+        "photos/2024-03-05-1.png",
+        "photos/2024-03-05-2.png",
+        "photos/2024-03-05-3.png"
+      ],
+      "videos": [],
+      "voices": []
+    },
+    "136": {
+      "photos": [
+        "photos/2024-03-06-1.png",
+        "photos/2024-03-06-2.png"
+      ],
+      "videos": [],
+      "voices": []
+    },
+    "152": {
+      "photos": [
+        "photos/2024-03-22-1.png"
+      ],
+      "videos": [],
+      "voices": []
+    },
+    "160": {
+      "photos": [
+        "photos/2024-03-30-1.png",
+        "photos/2024-03-30-2.png",
+        "photos/2024-03-30-3.png",
+        "photos/2024-03-30-4.png",
+        "photos/2024-03-30-5.png",
+        "photos/2024-03-30-6.png",
+        "photos/2024-03-30-7.png",
+        "photos/2024-03-30-8.png"
+      ],
+      "videos": [],
+      "voices": []
+    },
+    "184": {
+      "photos": [
+        "photos/2024-04-23-1.JPG",
+        "photos/2024-04-23-2.JPG",
+        "photos/2024-04-23-3.JPG"
+      ],
+      "videos": [],
+      "voices": []
+    },
+    "188": {
+      "photos": [
+        "photos/2024-04-27-1.JPG",
+        "photos/2024-04-27-2.png",
+        "photos/2024-04-27-3.JPG"
+      ],
+      "videos": [],
+      "voices": []
+    },
+    "212": {
+      "photos": [
+        "photos/2024-05-21-1.png",
+        "photos/2024-05-21-2.png",
+        "photos/2024-05-21-3.png",
+        "photos/2024-05-21-4.png",
+        "photos/2024-05-21-5.png",
+        "photos/2024-05-21-6.png",
+        "photos/2024-05-21-7.png",
+        "photos/2024-05-21-8.png"
+      ],
+      "videos": [
+        "videos/2024-05-21-1.mp4"
+      ],
+      "voices": []
+    },
+    "222": {
+      "photos": [
+        "photos/2024-05-31-1.png",
+        "photos/2024-05-31-2.png"
+      ],
+      "videos": [],
+      "voices": []
+    },
+    "226": {
+      "photos": [
+        "photos/2024-06-04-1.png"
+      ],
+      "videos": [],
+      "voices": []
+    },
+    "228": {
+      "photos": [
+        "photos/2024-06-06-1.png"
+      ],
+      "videos": [],
+      "voices": []
+    },
+    "273": {
+      "photos": [
+        "photos/2024-07-21-1.png",
+        "photos/2024-07-21-2.png"
+      ],
+      "videos": [],
+      "voices": []
+    },
+    "278": {
+      "photos": [],
+      "videos": [
+        "videos/2024-07-26-1.mp4"
+      ],
+      "voices": []
+    },
+    "293": {
+      "photos": [
+        "photos/2024-08-10-1.png"
+      ],
+      "videos": [],
+      "voices": []
+    },
+    "362": {
+      "photos": [
+        "photos/2024-10-18-1.JPG"
+      ],
+      "videos": [],
+      "voices": []
+    },
+    "389": {
+      "photos": [
+        "photos/2024-11-14-1.png",
+        "photos/2024-11-14-2.png",
+        "photos/2024-11-14-3.png"
+      ],
+      "videos": [],
+      "voices": []
+    },
+    "440": {
+      "photos": [
+        "photos/2025-01-04-1.jpg",
+        "photos/2025-01-04-2.png"
+      ],
+      "videos": [],
+      "voices": []
+    },
+    "453": {
+      "photos": [
+        "photos/2025-01-17-1.png",
+        "photos/2025-01-17-2.png",
+        "photos/2025-01-17-3.png"
+      ],
+      "videos": [],
+      "voices": []
+    },
+    "501": {
+      "photos": [
+        "photos/2025-03-06-1.png"
+      ],
+      "videos": [],
+      "voices": []
+    },
+    "517": {
+      "photos": [
+        "photos/2025-03-22-1.png",
+        "photos/2025-03-22-2.png"
+      ],
+      "videos": [],
+      "voices": []
+    },
+    "555": {
+      "photos": [
+        "photos/2025-04-29-1.png",
+        "photos/2025-04-29-2.png",
+        "photos/2025-04-29-3.png"
+      ],
+      "videos": [],
+      "voices": []
+    },
+    "617": {
+      "photos": [
+        "photos/2025-06-30-1.png",
+        "photos/2025-06-30-2.png",
+        "photos/2025-06-30-3.png"
+      ],
+      "videos": [],
+      "voices": []
+    },
+    "644": {
+      "photos": [
+        "photos/2025-07-27-1.png"
+      ],
+      "videos": [],
+      "voices": []
+    },
+    "690": {
+      "photos": [],
+      "videos": [
+        "videos/2025-09-11-1.mp4"
+      ],
+      "voices": []
+    },
+    "732": {
+      "photos": [
+        "photos/2025-10-23-1.png",
+        "photos/2025-10-23-2.png"
+      ],
+      "videos": [],
+      "voices": []
+    },
+    "791": {
+      "photos": [
+        "photos/2025-12-21-1.png",
+        "photos/2025-12-21-2.png"
+      ],
+      "videos": [],
+      "voices": []
+    },
+    "792": {
+      "photos": [
+        "photos/2025-12-22-1.png",
+        "photos/2025-12-22-2.png",
+        "photos/2025-12-22-3.JPG"
+      ],
+      "videos": [],
+      "voices": []
+    },
+    "812": {
+      "photos": [
+        "photos/2026-01-11-1.png",
+        "photos/2026-01-11-2.png"
+      ],
+      "videos": [],
+      "voices": []
+    },
+    "821": {
+      "photos": [
+        "photos/2026-01-20-1.png",
+        "photos/2026-01-20-2.png"
+      ],
+      "videos": [],
+      "voices": []
+    },
+    "826": {
+      "photos": [
+        "photos/2026-01-25-1.png",
+        "photos/2026-01-25-2.png"
+      ],
+      "videos": [],
+      "voices": []
+    },
+    "866": {
+      "photos": [
+        "photos/2026-03-06-1.png",
+        "photos/2026-03-06-2.png",
+        "photos/2026-03-06-3.png",
+        "photos/2026-03-06-4.jpg"
+      ],
+      "videos": [],
+      "voices": []
+    },
+    "874": {
+      "photos": [
+        "photos/2026-03-14-1.jpg",
+        "photos/2026-03-14-2.jpg",
+        "photos/2026-03-14-3.jpg",
+        "photos/2026-03-14-4.jpg",
+        "photos/2026-03-14-5.jpg"
+      ],
+      "videos": [
+        "videos/2026-03-14-1.MP4"
+      ],
+      "voices": []
+    },
+    "937": {
+      "photos": [
+        "photos/2026-05-16-1.jpg",
+        "photos/2026-05-16-2.jpg",
+        "photos/2026-05-16-3.jpg",
+        "photos/2026-05-16-4.jpg",
+        "photos/2026-05-16-5.jpg"
+      ],
+      "videos": [],
+      "voices": []
+    }
+  }
+}
