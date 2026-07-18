@@ -1231,7 +1231,6 @@
 
     <script>
         // ---------- 你可以修改这里的基础配置 ----------
-        // 自动扫描哪些天有照片/视频（无需手动填写）
         let validDays = [];
         let currentIndex = 0;   // 当前在 validDays 中的索引位置
 
@@ -1239,9 +1238,17 @@
         // 使用本地时间 2023-10-23 00:00:00（月份从 0 开始，9 = 10月）
         const startDate = new Date(2023, 9, 23);
 
-        // 支持的图片/视频扩展名（大小写均支持）
-        const PHOTO_EXTS = ['jpg','JPG','jpeg','JPEG','png','PNG','gif','GIF','webp','WEBP','bmp','BMP'];
+        // ===== 性能优化：协议检测 & 超时配置 =====
+        const IS_FILE_PROTOCOL = window.location.protocol === 'file:';
+        const CHECK_TIMEOUT = IS_FILE_PROTOCOL ? 500 : 2000;  // file:// 下错误立即触发，短超时即可
+
+        // 常用扩展名（优先检测，覆盖 99% 场景）
+        const PHOTO_EXTS_FAST = ['jpg','jpeg','png','webp','JPG','JPEG','PNG','WEBP'];
+        const PHOTO_EXTS_FULL = ['jpg','jpeg','png','webp','JPG','JPEG','PNG','WEBP','gif','GIF','bmp','BMP'];
         const VIDEO_EXTS = ['mp4','MP4','webm','WEBM','mov','MOV'];
+
+        // ===== 扫描缓存：记住哪些天已经检查过 =====
+        const scannedCache = new Map(); // day -> { hasPhoto: bool }
 
         // ---------- 实时计时器 ----------
         function updateLoveTimer() {
@@ -1593,7 +1600,7 @@
         }
 
         // ---------- 媒体探测 & 轮播 ----------
-        const MAX_MEDIA_PER_DAY = 20; // 每天最多探测多少张
+        const MAX_MEDIA_PER_DAY = 10; // 每天最多探测多少张（减少以提升移动端速度）
 
         let currentSlide = 0;
         let mediaItems = [];
@@ -1659,199 +1666,254 @@
             return `${yyyy}-${mm}-${dd}`;
         }
 
-        // 检测图片是否存在（返回 boolean，用于 detectAndRenderMedia）
+        // ===== 快速文件存在检测（优化超时） =====
+        function fileExists(url) {
+            return new Promise((resolve, reject) => {
+                if (!IS_FILE_PROTOCOL) {
+                    // HTTP 服务器：用 fetch HEAD 快速检测
+                    fetch(url, { method: 'HEAD' }).then(r => {
+                        if (r.ok) resolve(true); else reject(new Error('404'));
+                    }).catch(() => {
+                        // fetch 失败，回退到 Image 探测
+                        checkWithImage(url, resolve, reject);
+                    });
+                } else {
+                    // file:// 协议：直接走 Image 探测（fetch 必定失败）
+                    checkWithImage(url, resolve, reject);
+                }
+            });
+
+            function checkWithImage(url, resolve, reject) {
+                const img = new Image();
+                let settled = false;
+                const tid = setTimeout(() => {
+                    if (!settled) { settled = true; img.src = ''; reject(new Error('timeout')); }
+                }, CHECK_TIMEOUT);
+                img.onload = () => {
+                    if (!settled) { settled = true; clearTimeout(tid); resolve(true); }
+                };
+                img.onerror = () => {
+                    if (!settled) { settled = true; clearTimeout(tid); reject(new Error('not found')); }
+                };
+                img.src = url;
+            }
+        }
+
+        // 检测图片是否存在（返回 boolean）
         function imageExists(url) {
             return fileExists(url).then(() => true).catch(() => false);
         }
 
-        // 检测文件是否存在：存在则 resolve，不存在则 reject（配合 Promise.any 使用）
-        function fileExists(url) {
-            return new Promise((resolve, reject) => {
-                // 先用 fetch HEAD 快速检测 (适用于 HTTP/HTTPS)
-                fetch(url, { method: 'HEAD' }).then(r => {
-                    if (r.ok) resolve(true);
-                    else reject(new Error('404'));
-                }).catch(() => {
-                    // file:// 协议下 fetch 被禁，用 Image 探测
-                    const img = new Image();
-                    const tid = setTimeout(() => {
-                        img.src = '';
-                        reject(new Error('timeout'));
-                    }, 4000);
-                    img.onload = () => { clearTimeout(tid); resolve(true); };
-                    img.onerror = () => { clearTimeout(tid); reject(new Error('not found')); };
-                    img.src = url;
-                });
-            });
-        }
-
-        // 并行检测当天是否有照片（所有扩展名一起探测）
+        // ===== 快速检测某天是否有照片（缓存 + 并行） =====
         async function dayHasPhoto(day, dateStr) {
-            // 主命名：photos/2023-10-23-1.{ext}
-            const mainChecks = PHOTO_EXTS.map(ext =>
-                fileExists(`photos/${dateStr}-1.${ext}`).then(() => true)
-            );
-            // 旧格式：photos/day{N}-1.{ext} 和 photos/day{N}.{ext}
-            const oldChecks = PHOTO_EXTS.map(ext =>
-                fileExists(`photos/day${day}-1.${ext}`).then(() => true)
-            );
-            const oldSingleChecks = PHOTO_EXTS.map(ext =>
-                fileExists(`photos/day${day}.${ext}`).then(() => true)
-            );
+            // 先查缓存
+            if (scannedCache.has(day)) return scannedCache.get(day).hasPhoto;
 
-            // 三组并行竞争，任一组有结果即返回
+            // 三组命名格式并行检测，任一组成功即返回
+            const checkGroup = (urls) =>
+                Promise.any(urls.map(u => fileExists(u))).then(() => true).catch(() => false);
+
+            const mainUrls = PHOTO_EXTS_FAST.map(ext => `photos/${dateStr}-1.${ext}`);
+            const oldUrls = PHOTO_EXTS_FAST.map(ext => `photos/day${day}-1.${ext}`);
+            const oldSingleUrls = PHOTO_EXTS_FAST.map(ext => `photos/day${day}.${ext}`);
+
             const results = await Promise.allSettled([
-                Promise.any(mainChecks),
-                Promise.any(oldChecks),
-                Promise.any(oldSingleChecks),
+                checkGroup(mainUrls),
+                checkGroup(oldUrls),
+                checkGroup(oldSingleUrls),
             ]);
-            return results.some(r => r.status === 'fulfilled');
+            const hasPhoto = results.some(r => r.status === 'fulfilled' && r.value === true);
+
+            scannedCache.set(day, { hasPhoto });
+            return hasPhoto;
         }
 
-        // 自动扫描所有有照片的天数（并行优化版）
-        async function autoScanValidDays() {
-            const start = new Date(startDate);
-            const today = new Date();
-            const totalDays = Math.floor((today - start) / (1000 * 60 * 60 * 24)) + 1;
-            const maxScan = Math.min(totalDays, 1000);
-            const found = [];
-
-            // 预计算所有天的日期字符串
-            const dayInfo = [];
-            for (let day = 1; day <= maxScan; day++) {
-                const d = new Date(start);
-                d.setDate(d.getDate() + day - 1);
-                const yyyy = d.getFullYear();
-                const mm = String(d.getMonth() + 1).padStart(2, '0');
-                const dd = String(d.getDate()).padStart(2, '0');
-                dayInfo.push({ day, dateStr: `${yyyy}-${mm}-${dd}` });
-            }
-
-            // 分批并行检测，每批 120 天
-            const BATCH = 120;
-            let scanned = 0;
-            const loadingText = document.getElementById('loadingText');
-            const loadingBar = document.getElementById('loadingFill');
-
-            for (let i = 0; i < dayInfo.length; i += BATCH) {
-                const batch = dayInfo.slice(i, i + BATCH);
-                const results = await Promise.all(
-                    batch.map(info => dayHasPhoto(info.day, info.dateStr))
-                );
-                for (let j = 0; j < batch.length; j++) {
-                    if (results[j]) found.push(batch[j].day);
+        // ===== 懒加载：向前/向后查找下一个有照片的天 =====
+        async function findNextDayWithPhoto(fromDay) {
+            const maxDay = 1000;
+            for (let d = fromDay + 1; d <= maxDay; d++) {
+                if (scannedCache.has(d)) {
+                    if (scannedCache.get(d).hasPhoto) return d;
+                    continue;
                 }
-                scanned += batch.length;
-                // 更新加载进度
-                const pct = Math.round(scanned / maxScan * 100);
-                if (loadingText) loadingText.textContent = `正在寻找回忆... ${pct}%`;
-                if (loadingBar) loadingBar.style.width = pct + '%';
+                const dateStr = dayToDateStr(d);
+                const hasPhoto = await dayHasPhoto(d, dateStr);
+                if (hasPhoto) return d;
             }
-
-            found.sort((a, b) => a - b);
-            return found;
+            return null;
         }
 
-        // 检测媒体文件是否存在（兼容 file:// 协议）
+        async function findPrevDayWithPhoto(fromDay) {
+            for (let d = fromDay - 1; d >= 1; d--) {
+                if (scannedCache.has(d)) {
+                    if (scannedCache.get(d).hasPhoto) return d;
+                    continue;
+                }
+                const dateStr = dayToDateStr(d);
+                const hasPhoto = await dayHasPhoto(d, dateStr);
+                if (hasPhoto) return d;
+            }
+            return null;
+        }
+
+        // 确保某天已被扫描并返回是否有效
+        async function ensureDayScanned(day) {
+            if (scannedCache.has(day)) return scannedCache.get(day).hasPhoto;
+            const dateStr = dayToDateStr(day);
+            return await dayHasPhoto(day, dateStr);
+        }
+
+        // ===== 检测媒体文件是否存在（兼容 file://，优化超时） =====
         function mediaExists(url, mimeType) {
             return new Promise((resolve) => {
-                if (mimeType && mimeType.startsWith('video/')) {
-                    // 先试 fetch（http:// 服务器场景）
-                    fetch(url, { method: 'HEAD' }).then(r => resolve(r.ok)).catch(() => {
-                        // file:// 下 fetch 被禁，用 <video> 元素探测
-                        const video = document.createElement('video');
-                        video.preload = 'metadata';
-                        video.muted = true;
-                        let resolved = false;
-                        const cleanup = () => { video.remove(); };
-                        video.onloadedmetadata = () => {
-                            if (!resolved) { resolved = true; cleanup(); resolve(true); }
-                        };
-                        video.onerror = () => {
-                            if (!resolved) { resolved = true; cleanup(); resolve(false); }
-                        };
-                        video.src = url;
-                        video.load();
-                        setTimeout(() => {
-                            if (!resolved) { resolved = true; cleanup(); resolve(false); }
-                        }, 3000);
-                    });
+                if (!mimeType) { resolve(false); return; }
+
+                if (mimeType.startsWith('video/')) {
+                    if (!IS_FILE_PROTOCOL) {
+                        fetch(url, { method: 'HEAD' }).then(r => resolve(r.ok)).catch(() => {
+                            checkWithVideo(url, resolve);
+                        });
+                    } else {
+                        checkWithVideo(url, resolve);
+                    }
                     return;
                 }
-                // 音频：用 Audio 元素
-                const el = mimeType && mimeType.startsWith('audio/') ? new Audio() : null;
-                if (el) {
-                    let resolved = false;
-                    el.oncanplaythrough = () => { if (!resolved) { resolved = true; resolve(true); } };
-                    el.onerror = () => { if (!resolved) { resolved = true; resolve(false); } };
+
+                if (mimeType.startsWith('audio/')) {
+                    const el = new Audio();
+                    let settled = false;
+                    const tid = setTimeout(() => {
+                        if (!settled) { settled = true; resolve('maybe'); }
+                    }, CHECK_TIMEOUT);
+                    el.oncanplaythrough = () => {
+                        if (!settled) { settled = true; clearTimeout(tid); resolve(true); }
+                    };
+                    el.onerror = () => {
+                        if (!settled) { settled = true; clearTimeout(tid); resolve(false); }
+                    };
                     el.src = url;
                     el.load();
-                    setTimeout(() => { if (!resolved) { resolved = true; resolve('maybe'); } }, 2000);
                     return;
                 }
+
                 resolve(false);
             });
+
+            function checkWithVideo(url, resolve) {
+                const video = document.createElement('video');
+                video.preload = 'metadata';
+                video.muted = true;
+                let settled = false;
+                const tid = setTimeout(() => {
+                    if (!settled) { settled = true; video.remove(); resolve(false); }
+                }, CHECK_TIMEOUT);
+                video.onloadedmetadata = () => {
+                    if (!settled) { settled = true; clearTimeout(tid); video.remove(); resolve(true); }
+                };
+                video.onerror = () => {
+                    if (!settled) { settled = true; clearTimeout(tid); video.remove(); resolve(false); }
+                };
+                video.src = url;
+                video.load();
+            }
         }
 
+        // ===== 检测并渲染当天媒体（并行优化版） =====
         async function detectAndRenderMedia(day) {
             const items = [];
             const dateStr = dayToDateStr(day);
 
-            // 主命名：photos/2023-10-23-1.jpg, photos/2023-10-23-2.jpg ...
-            for (let i = 1; i <= MAX_MEDIA_PER_DAY; i++) {
-                let found = false;
-                for (const ext of PHOTO_EXTS) {
-                    const src = `photos/${dateStr}-${i}.${ext}`;
-                    if (await imageExists(src)) { items.push({ type: 'image', src }); found = true; break; }
-                }
-                if (!found) break;
-            }
-            // 向后兼容：photos/day{N}-{i}.{ext} 或 photos/day{N}.{ext}
-            if (items.length === 0 || items.every(it => it.type === 'video')) {
-                for (let i = 1; i <= MAX_MEDIA_PER_DAY; i++) {
-                    let found = false;
-                    for (const ext of PHOTO_EXTS) {
-                        const src = `photos/day${day}-${i}.${ext}`;
-                        if (await imageExists(src)) { items.push({ type: 'image', src }); found = true; break; }
-                    }
-                    if (!found) break;
-                }
-                if (items.length === 0 || items.every(it => it.type === 'video')) {
-                    for (const ext of PHOTO_EXTS) {
-                        const src = `photos/day${day}.${ext}`;
-                        if (await imageExists(src)) { items.unshift({ type: 'image', src }); break; }
-                    }
-                }
+            // 辅助：用 Promise.any 并行检测某个路径的所有扩展名，返回第一个匹配的 src
+            async function findFirstMatch(basePath, index, exts) {
+                try {
+                    const ext = await Promise.any(
+                        exts.map(e => fileExists(`${basePath}-${index}.${e}`).then(() => e))
+                    );
+                    return `${basePath}-${index}.${ext}`;
+                } catch { return null; }
             }
 
-            // 探测视频：videos/{dateStr}-1.mp4 ... / 向后兼容 videos/day{N}-{i}.mp4
-            for (let i = 1; i <= MAX_MEDIA_PER_DAY; i++) {
-                let found = false;
-                for (const ext of VIDEO_EXTS) {
-                    const src = `videos/${dateStr}-${i}.${ext}`;
-                    const exists = await mediaExists(src, 'video/' + (ext === 'mov' ? 'quicktime' : ext));
-                    if (exists === true) { items.push({ type: 'video', src }); found = true; break; }
-                }
-                if (!found) break;
+            async function findSingleMatch(basePath, exts) {
+                try {
+                    const ext = await Promise.any(
+                        exts.map(e => fileExists(`${basePath}.${e}`).then(() => e))
+                    );
+                    return `${basePath}.${ext}`;
+                } catch { return null; }
             }
-            if (!items.some(it => it.type === 'video')) {
+
+            // === 照片检测：并行探测所有索引 ===
+            async function detectPhotos(basePath) {
+                // 并行探测前 MAX_MEDIA_PER_DAY 张
+                const checks = [];
                 for (let i = 1; i <= MAX_MEDIA_PER_DAY; i++) {
-                    let found = false;
-                    for (const ext of VIDEO_EXTS) {
-                        const src = `videos/day${day}-${i}.${ext}`;
-                        const exists = await mediaExists(src, 'video/' + (ext === 'mov' ? 'quicktime' : ext));
-                        if (exists === true) { items.push({ type: 'video', src }); found = true; break; }
-                    }
-                    if (!found) break;
+                    checks.push(findFirstMatch(basePath, i, PHOTO_EXTS_FAST));
                 }
-                if (!items.some(it => it.type === 'video')) {
-                    for (const ext of VIDEO_EXTS) {
-                        const src = `videos/day${day}.${ext}`;
-                        const exists = await mediaExists(src, 'video/' + (ext === 'mov' ? 'quicktime' : ext));
-                        if (exists === true) { items.push({ type: 'video', src }); break; }
-                    }
+                const results = await Promise.all(checks);
+                const found = [];
+                for (const src of results) {
+                    if (src) found.push({ type: 'image', src });
+                    else break; // 遇到缺失就停止（索引连续）
+                }
+                return found;
+            }
+
+            // 先试主命名格式
+            let photos = await detectPhotos(`photos/${dateStr}`);
+
+            // 如果主格式没找到，试旧格式
+            if (photos.length === 0) {
+                photos = await detectPhotos(`photos/day${day}`);
+                if (photos.length === 0) {
+                    // 再试单文件旧格式：photos/day{N}.{ext}
+                    const single = await findSingleMatch(`photos/day${day}`, PHOTO_EXTS_FAST);
+                    if (single) photos.push({ type: 'image', src: single });
                 }
             }
+            items.push(...photos);
+
+            // === 视频检测：并行探测 ===
+            async function findFirstVideoMatch(basePath, index, exts) {
+                try {
+                    const ext = await Promise.any(
+                        exts.map(e => mediaExists(`${basePath}-${index}.${e}`, 'video/' + (e === 'mov' ? 'quicktime' : e)).then(r => r === true ? e : Promise.reject()))
+                    );
+                    return `${basePath}-${index}.${ext}`;
+                } catch { return null; }
+            }
+
+            async function findSingleVideoMatch(basePath, exts) {
+                try {
+                    const ext = await Promise.any(
+                        exts.map(e => mediaExists(`${basePath}.${e}`, 'video/' + (e === 'mov' ? 'quicktime' : e)).then(r => r === true ? e : Promise.reject()))
+                    );
+                    return `${basePath}.${ext}`;
+                } catch { return null; }
+            }
+
+            async function detectVideos(basePath) {
+                const checks = [];
+                for (let i = 1; i <= MAX_MEDIA_PER_DAY; i++) {
+                    checks.push(findFirstVideoMatch(basePath, i, VIDEO_EXTS));
+                }
+                const results = await Promise.all(checks);
+                const found = [];
+                for (const src of results) {
+                    if (src) found.push({ type: 'video', src });
+                    else break;
+                }
+                return found;
+            }
+
+            let videos = await detectVideos(`videos/${dateStr}`);
+            if (videos.length === 0) {
+                videos = await detectVideos(`videos/day${day}`);
+                if (videos.length === 0) {
+                    const single = await findSingleVideoMatch(`videos/day${day}`, VIDEO_EXTS);
+                    if (single) videos.push({ type: 'video', src: single });
+                }
+            }
+            items.push(...videos);
 
             renderCarousel(items, day);
         }
@@ -1923,9 +1985,9 @@
                 const slide = document.createElement('div');
                 slide.className = 'carousel-slide';
                 if (item.type === 'image') {
-                    slide.innerHTML = `<img src="${item.src}" alt="回忆">`;
+                    slide.innerHTML = `<img src="${item.src}" alt="回忆" loading="lazy">`;
                 } else {
-                    slide.innerHTML = `<video src="${item.src}" controls playsinline preload="metadata"></video>`;
+                    slide.innerHTML = `<video src="${item.src}" controls playsinline preload="none" poster=""></video>`;
                     // 视频加载失败时显示提示
                     const videoEl = slide.querySelector('video');
                     if (videoEl) {
@@ -2126,9 +2188,10 @@
             const found = await checkAndPlayVoice(voiceSrc);
             if (!found) await checkAndPlayVoice(voiceSrcOld);
 
-            // 更新按钮状态
+            // 更新按钮状态（懒加载模式下，next 始终可用——会按需扫描）
             document.getElementById('prevBtn').disabled = (currentIndex === 0);
-            document.getElementById('nextBtn').disabled = (currentIndex === validDays.length - 1);
+            // next 按钮始终启用：如果已是最后一个已知天，点击时会自动向后扫描
+            document.getElementById('nextBtn').disabled = false;
 
             // 庆祝特效（首次加载时跳过）
             if (!isFirstLoad) {
@@ -2218,7 +2281,7 @@
             }, 210);
         }
 
-        // ---------- 触摸滑动 ----------
+        // ---------- 触摸滑动（全局：切换天数）----------
         let touchStartX = 0, touchStartY = 0;
 
         document.addEventListener('touchstart', (e) => {
@@ -2226,29 +2289,88 @@
             touchStartY = e.touches[0].clientY;
         }, { passive: true });
 
-        document.addEventListener('touchend', (e) => {
+        document.addEventListener('touchend', async (e) => {
             const dx = e.changedTouches[0].clientX - touchStartX;
             const dy = e.changedTouches[0].clientY - touchStartY;
             // 水平滑动超过 50px 且大于垂直滑动时触发
             if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
-                swipeTo(dx < 0 ? 'next' : 'prev');
+                if (dx < 0) {
+                    // 向右滑 = 下一天
+                    if (currentIndex >= validDays.length - 1) {
+                        const nextDay = await findNextDayWithPhoto(validDays[validDays.length - 1]);
+                        if (nextDay !== null) {
+                            validDays.push(nextDay);
+                            currentIndex = validDays.length - 1;
+                            await updateDay();
+                        }
+                        return;
+                    }
+                    swipeTo('next');
+                } else {
+                    // 向左滑 = 前一天
+                    if (currentIndex <= 0) return;
+                    swipeTo('prev');
+                }
             }
         });
 
-        // 切换天数事件：按钮也走滑动动画
-        document.getElementById('prevBtn').addEventListener('click', () => swipeTo('prev'));
-        document.getElementById('nextBtn').addEventListener('click', () => swipeTo('next'));
-        document.getElementById('letterNavBtn').addEventListener('click', () => showLoveLetter());
+        // 切换天数事件：懒加载 + 滑动动画
+        document.getElementById('prevBtn').addEventListener('click', async () => {
+            if (isAnimating) return;
+            if (currentIndex <= 0) return;
 
-        // 快速跳转：检查输入天数是否在 validDays 中
-        document.getElementById('jumpBtn').addEventListener('click', () => {
-            const input = document.getElementById('jumpInput');
-            const target = parseInt(input.value, 10);
-            if (isNaN(target) || target < 1) {
-                alert('请输入一个有效的天数～');
+            // 如果前面还有已知的有效天，直接切换
+            if (currentIndex > 0) {
+                swipeTo('prev');
                 return;
             }
-            const idx = validDays.indexOf(target);
+
+            // 尝试向前扫描
+            const prevDay = await findPrevDayWithPhoto(validDays[0]);
+            if (prevDay !== null) {
+                validDays.unshift(prevDay);
+                // currentIndex 保持 0，但需要刷新显示
+                await updateDay();
+            }
+        });
+
+        document.getElementById('nextBtn').addEventListener('click', async () => {
+            if (isAnimating) return;
+            if (currentIndex >= validDays.length - 1) {
+                // 尝试向后扫描
+                const nextDay = await findNextDayWithPhoto(validDays[validDays.length - 1]);
+                if (nextDay !== null) {
+                    validDays.push(nextDay);
+                    currentIndex = validDays.length - 1;
+                    await updateDay();
+                }
+                return;
+            }
+            swipeTo('next');
+        });
+
+        document.getElementById('letterNavBtn').addEventListener('click', () => showLoveLetter());
+
+        // 快速跳转：按需扫描目标天
+        document.getElementById('jumpBtn').addEventListener('click', async () => {
+            const input = document.getElementById('jumpInput');
+            const target = parseInt(input.value, 10);
+            if (isNaN(target) || target < 1 || target > 1000) {
+                alert('请输入一个有效的天数（1-1000）～');
+                return;
+            }
+            // 先看是否已在 validDays 中
+            let idx = validDays.indexOf(target);
+            if (idx === -1) {
+                // 按需扫描
+                const hasPhoto = await ensureDayScanned(target);
+                if (hasPhoto) {
+                    // 插入并保持排序
+                    validDays.push(target);
+                    validDays.sort((a, b) => a - b);
+                    idx = validDays.indexOf(target);
+                }
+            }
             if (idx === -1) {
                 alert('这一天还没有回忆哦～');
             } else {
@@ -2259,12 +2381,28 @@
         });
 
         // 全局键盘导航
-        document.addEventListener('keydown', (e) => {
+        document.addEventListener('keydown', async (e) => {
             // 不在输入框中才响应
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
             switch (e.key) {
-                case 'ArrowLeft':  e.preventDefault(); swipeTo('prev'); break;
-                case 'ArrowRight': e.preventDefault(); swipeTo('next'); break;
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    if (currentIndex > 0) swipeTo('prev');
+                    break;
+                case 'ArrowRight':
+                    e.preventDefault();
+                    if (currentIndex < validDays.length - 1) {
+                        swipeTo('next');
+                    } else {
+                        // 尝试向后扫描
+                        const nextDay = await findNextDayWithPhoto(validDays[validDays.length - 1]);
+                        if (nextDay !== null) {
+                            validDays.push(nextDay);
+                            currentIndex = validDays.length - 1;
+                            await updateDay();
+                        }
+                    }
+                    break;
                 case 'ArrowUp':    e.preventDefault(); prevSlide(); break;
                 case 'ArrowDown':  e.preventDefault(); nextSlide(); break;
             }
@@ -2277,11 +2415,19 @@
             }
         });
 
-        // 重要日快捷按钮
+        // 重要日快捷按钮（懒加载扫描）
         document.querySelectorAll('.milestone-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
+            btn.addEventListener('click', async () => {
                 const target = parseInt(btn.dataset.day, 10);
-                const idx = validDays.indexOf(target);
+                let idx = validDays.indexOf(target);
+                if (idx === -1) {
+                    const hasPhoto = await ensureDayScanned(target);
+                    if (hasPhoto) {
+                        validDays.push(target);
+                        validDays.sort((a, b) => a - b);
+                        idx = validDays.indexOf(target);
+                    }
+                }
                 if (idx === -1) {
                     alert('这一天还没有回忆哦～');
                 } else {
@@ -2532,20 +2678,51 @@
             detectAndRenderMedia(day);
         }
 
-        // 初始化：扫描所有照片 → 定位到第一天
+        // ===== 初始化：懒加载模式（只扫描第一天，其余按需加载） =====
         (async function init() {
-            validDays = await autoScanValidDays();
-            // 合并纯文字日（没有照片但依然值得纪念的日子）
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            const loadingText = document.getElementById('loadingText');
+            const loadingBar = document.getElementById('loadingFill');
+
+            // 预先标记已知的特殊日（先假设有，后续导航时验证）
+            const knownDays = [1, 100, 365, 732, 1000];
+
+            // 快速更新加载动画
+            if (loadingText) loadingText.textContent = '正在寻找回忆...';
+            if (loadingBar) loadingBar.style.width = '30%';
+
+            // 只扫描第一天
+            const dateStr1 = dayToDateStr(1);
+            const hasDay1 = await dayHasPhoto(1, dateStr1);
+
+            if (loadingBar) loadingBar.style.width = '70%';
+
+            if (hasDay1) validDays.push(1);
+
+            // 合并纯文字日（这些天没有照片也会显示）
             TEXT_ONLY_DAYS.forEach(d => {
                 if (!validDays.includes(d.day)) validDays.push(d.day);
             });
+
+            // 把已知特殊日也加入（后续点击时按需验证）
+            knownDays.forEach(d => {
+                if (!validDays.includes(d)) validDays.push(d);
+                // 预标记缓存（如果还没扫描过）
+                if (!scannedCache.has(d)) {
+                    scannedCache.set(d, { hasPhoto: true }); // 乐观假设有
+                }
+            });
+
             validDays.sort((a, b) => a - b);
+
+            if (loadingBar) loadingBar.style.width = '100%';
+
             if (validDays.length > 0) {
                 currentIndex = 0;
                 await updateDay();
             }
+
             // 隐藏加载动画
-            const loadingOverlay = document.getElementById('loadingOverlay');
             if (loadingOverlay) {
                 loadingOverlay.classList.add('done');
                 setTimeout(() => loadingOverlay.remove(), 600);
