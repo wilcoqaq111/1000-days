@@ -1728,30 +1728,44 @@
             return hasPhoto;
         }
 
-        // ===== 懒加载：向前/向后查找下一个有照片的天 =====
+        // ===== 懒加载：向前/向后查找下一个有照片的天（使用快速检测） =====
         async function findNextDayWithPhoto(fromDay) {
             const maxDay = 1000;
+            // 先检查 validDays 中是否已有下一个
+            const nextIdx = validDays.indexOf(fromDay) + 1;
+            if (nextIdx < validDays.length) return validDays[nextIdx];
+
+            // 逐天向后扫描（使用快速检测）
             for (let d = fromDay + 1; d <= maxDay; d++) {
                 if (scannedCache.has(d)) {
                     if (scannedCache.get(d).hasPhoto) return d;
                     continue;
                 }
                 const dateStr = dayToDateStr(d);
-                const hasPhoto = await dayHasPhoto(d, dateStr);
-                if (hasPhoto) return d;
+                if (await dayHasPhotoFast(d, dateStr)) {
+                    if (!validDays.includes(d)) { validDays.push(d); validDays.sort((a, b) => a - b); }
+                    return d;
+                }
             }
             return null;
         }
 
         async function findPrevDayWithPhoto(fromDay) {
+            // 先检查 validDays 中是否已有上一个
+            const prevIdx = validDays.indexOf(fromDay) - 1;
+            if (prevIdx >= 0) return validDays[prevIdx];
+
+            // 逐天向前扫描
             for (let d = fromDay - 1; d >= 1; d--) {
                 if (scannedCache.has(d)) {
                     if (scannedCache.get(d).hasPhoto) return d;
                     continue;
                 }
                 const dateStr = dayToDateStr(d);
-                const hasPhoto = await dayHasPhoto(d, dateStr);
-                if (hasPhoto) return d;
+                if (await dayHasPhotoFast(d, dateStr)) {
+                    if (!validDays.includes(d)) { validDays.push(d); validDays.sort((a, b) => a - b); }
+                    return d;
+                }
             }
             return null;
         }
@@ -1760,7 +1774,7 @@
         async function ensureDayScanned(day) {
             if (scannedCache.has(day)) return scannedCache.get(day).hasPhoto;
             const dateStr = dayToDateStr(day);
-            return await dayHasPhoto(day, dateStr);
+            return await dayHasPhotoFast(day, dateStr);
         }
 
         // ===== 检测媒体文件是否存在（兼容 file://，优化超时） =====
@@ -2678,41 +2692,91 @@
             detectAndRenderMedia(day);
         }
 
-        // ===== 初始化：懒加载模式（只扫描第一天，其余按需加载） =====
+        // ===== 高效单日检测（只查最常用扩展名，用于批量扫描） =====
+        async function dayHasPhotoFast(day, dateStr) {
+            if (scannedCache.has(day)) return scannedCache.get(day).hasPhoto;
+            // 只检查主命名格式的最常见扩展名（4个并行，覆盖99%情况）
+            const urls = ['jpg','jpeg','png','JPG','JPEG','PNG'].map(ext => `photos/${dateStr}-1.${ext}`);
+            try {
+                await Promise.any(urls.map(u => fileExists(u)));
+                scannedCache.set(day, { hasPhoto: true });
+                return true;
+            } catch {
+                scannedCache.set(day, { hasPhoto: false });
+                return false;
+            }
+        }
+
+        // ===== 后台批量扫描：静默发现所有有照片的天 =====
+        let backgroundScanRunning = false;
+        async function backgroundScanAllDays() {
+            if (backgroundScanRunning) return;
+            backgroundScanRunning = true;
+
+            const BATCH_SIZE = 20;
+            const BATCH_DELAY = 400; // 每批间隔 ms（给移动网络喘息时间）
+
+            for (let start = 2; start <= 1000; start += BATCH_SIZE) {
+                // 构建本批需要扫描的天
+                const batch = [];
+                for (let d = start; d < start + BATCH_SIZE && d <= 1000; d++) {
+                    if (!scannedCache.has(d)) batch.push(d);
+                }
+
+                // 并行扫描本批所有天
+                if (batch.length > 0) {
+                    await Promise.all(batch.map(async (day) => {
+                        const dateStr = dayToDateStr(day);
+                        const hasPhoto = await dayHasPhotoFast(day, dateStr);
+                        if (hasPhoto && !validDays.includes(day)) {
+                            validDays.push(day);
+                        }
+                    }));
+                    // 每批完成后排序（不影响当前导航位置）
+                    validDays.sort((a, b) => a - b);
+                    // 刷新按钮状态（next 始终可用因为新天可能被发现了）
+                    document.getElementById('prevBtn').disabled = (currentIndex === 0);
+                    document.getElementById('nextBtn').disabled = false;
+                }
+
+                // 批次间暂停，避免压垮移动网络
+                if (start + BATCH_SIZE <= 1000) {
+                    await new Promise(r => setTimeout(r, BATCH_DELAY));
+                }
+            }
+            backgroundScanRunning = false;
+        }
+
+        // 刷新 currentIndex（因为 backgroundScan 可能在 validDays 前面插入了新天）
+        function updateCurrentIndex() {
+            if (validDays.length === 0) return;
+            const currentDay = validDays[currentIndex];
+            if (currentDay !== undefined) {
+                currentIndex = validDays.indexOf(currentDay);
+                if (currentIndex === -1) currentIndex = 0;
+            }
+        }
+
+        // ===== 初始化：快速扫描第1天 → 显示 → 后台扫描其余 =====
         (async function init() {
             const loadingOverlay = document.getElementById('loadingOverlay');
             const loadingText = document.getElementById('loadingText');
             const loadingBar = document.getElementById('loadingFill');
 
-            // 预先标记已知的特殊日（先假设有，后续导航时验证）
-            const knownDays = [1, 100, 365, 732, 1000];
-
-            // 快速更新加载动画
             if (loadingText) loadingText.textContent = '正在寻找回忆...';
             if (loadingBar) loadingBar.style.width = '30%';
 
-            // 只扫描第一天
+            // 扫描第 1 天（快速，用户立刻看到内容）
             const dateStr1 = dayToDateStr(1);
             const hasDay1 = await dayHasPhoto(1, dateStr1);
-
-            if (loadingBar) loadingBar.style.width = '70%';
-
             if (hasDay1) validDays.push(1);
 
-            // 合并纯文字日（这些天没有照片也会显示）
+            if (loadingBar) loadingBar.style.width = '60%';
+
+            // 合并纯文字日
             TEXT_ONLY_DAYS.forEach(d => {
                 if (!validDays.includes(d.day)) validDays.push(d.day);
             });
-
-            // 把已知特殊日也加入（后续点击时按需验证）
-            knownDays.forEach(d => {
-                if (!validDays.includes(d)) validDays.push(d);
-                // 预标记缓存（如果还没扫描过）
-                if (!scannedCache.has(d)) {
-                    scannedCache.set(d, { hasPhoto: true }); // 乐观假设有
-                }
-            });
-
             validDays.sort((a, b) => a - b);
 
             if (loadingBar) loadingBar.style.width = '100%';
@@ -2727,6 +2791,10 @@
                 loadingOverlay.classList.add('done');
                 setTimeout(() => loadingOverlay.remove(), 600);
             }
+
+            // 启动后台扫描，静默发现其余所有天的照片
+            // 延迟 1 秒启动，优先保证首页渲染
+            setTimeout(() => backgroundScanAllDays(), 1000);
         })();
     </script>
 </body>
