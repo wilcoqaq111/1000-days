@@ -338,6 +338,17 @@
             background: #e91e63;
             transform: scale(1.35);
         }
+        /* ===== 拍照后的操作按钮（重拍/下载） ===== */
+        .photo-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 8px;
+        }
+        .photo-actions.hidden {
+            display: none;
+        }
         .nav-buttons {
             display: flex;
             justify-content: space-between;
@@ -1204,6 +1215,7 @@
             <button class="carousel-arrow carousel-prev hidden" id="carouselPrev"></button>
             <button class="carousel-arrow carousel-next hidden" id="carouselNext"></button>
             <div class="carousel-dots" id="carouselDots"></div>
+            <div class="photo-actions hidden" id="photoActions"></div>
         </div>
         
         <div class="nav-buttons">
@@ -1419,6 +1431,16 @@
                     '你是上天给我最好的礼物 🎁',
                     '往后余生，请多指教 ❤️',
                     '我们的故事还在继续... 📖',
+                    '一千天的陪伴，一辈子的承诺 💕',
+                    '谢谢你出现在我的生命里 ✨',
+                    '每一天醒来第一个想到的就是你 🌸',
+                    '愿意和我一起走完余生吗？💍',
+                    '1000天快乐，我最爱的你 💖',
+                    '从陌生到熟悉，从喜欢到深爱 💗',
+                    '你的笑容是我每天的动力 ☀️',
+                    '时间过得好快，还好有你在身边 🌙',
+                    '下一个1000天，还要一起走 💑',
+                    '我爱你，比昨天更多，比明天少一点 ❤️',
                 ],
             },
         ];
@@ -1508,7 +1530,7 @@
         }
 
         // ---------- 千日情书（可自行修改）----------
-        const LOVE_LETTER = `嗨，我最爱的你：
+        const LOVE_LETTER = `(｡･∀･)ﾉﾞ嗨，我最爱的张馨月宝宝：
 
 转眼间，我们已经一起走过了一千个日日夜夜。
 
@@ -1519,16 +1541,26 @@
 你是我清晨醒来的第一个念头，
 也是我睡前最后一句"晚安"。
 
+你是春天里的第一朵花，
+是夏日午后的那阵微风，
+是秋天飘落的第一片叶，
+是冬日清晨透过窗的第一缕阳光。
+你是我四季的所有美好。
+
 谢谢你包容我的小脾气，
 谢谢你记得每一个重要的日子，
 谢谢你让我变成了更好的人。
+
+我想把所有温柔都给你，
+想陪你走过每一个日出日落，
+想在每个平凡的日子里，给你不平凡的爱。
 
 一千天不是终点，是我们的新起点。
 我还想和你一起，数完一千个一千天。
 
 我爱你 ❤️
 
-—— 你的男朋友 吴冠`;
+—— 永远爱你的吴冠`;
 
         let letterShownThisSession = false;
 
@@ -1546,7 +1578,7 @@
 
             const title = document.createElement('div');
             title.className = 'letter-title';
-            title.textContent = '💌 给你的1000天小情书';
+            title.textContent = '💌 给宝宝的1000天小情书';
             modal.appendChild(title);
 
             const body = document.createElement('div');
@@ -1704,15 +1736,17 @@
             const textDay = TEXT_ONLY_DAYS.find(d => d.day === day);
 
             // 第1000天：拍照功能始终可用，不受其他媒体文件影响
+            const photoActions = document.getElementById('photoActions');
+
             if (textDay && textDay.camera) {
                 // 清除旧相框装饰，避免视觉干扰
                 mediaBox.classList.remove('frame-0', 'frame-1', 'frame-2');
                 mediaBox.querySelectorAll('.frame-dot, .frame-bow, .frame-pearl, .frame-flower').forEach(d => d.remove());
                 if (capturedPhotoData) {
-                    // 已拍过照：显示带相框的照片
+                    // 已拍过照：显示带相框的照片，按钮放到轮播外
                     track.innerHTML = `
-                        <div class="carousel-slide">
-                            <div style="height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;">
+                        <div class="carousel-slide" style="height:auto;min-height:220px;padding:4px 0;">
+                            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;">
                                 <div class="framed-photo-wrapper">
                                     <span class="frame-corner frame-corner-tl"></span>
                                     <span class="frame-corner frame-corner-tr"></span>
@@ -1720,12 +1754,12 @@
                                     <span class="frame-corner frame-corner-br"></span>
                                     <img class="frame-photo" src="${capturedPhotoData}" alt="我们的1000天">
                                 </div>
-                                <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
-                                    <button class="retake-btn" onclick="retakePhoto()">重新拍照</button>
-                                    <button class="download-btn" onclick="downloadPhoto()">下载照片</button>
-                                </div>
                             </div>
                         </div>`;
+                    photoActions.classList.remove('hidden');
+                    photoActions.innerHTML = `
+                        <button class="retake-btn" onclick="retakePhoto()">重新拍照</button>
+                        <button class="download-btn" onclick="downloadPhoto()">下载照片</button>`;
                 } else {
                     // 还没拍照：显示提示文字 + 拍照按钮
                     track.innerHTML = `
@@ -1735,11 +1769,15 @@
                                 <div class="camera-btn-wrap"><button class="camera-btn" onclick="openCamera()" title="拍照">📷</button></div>
                             </div>
                         </div>`;
+                    photoActions.classList.add('hidden');
                 }
                 prevBtn.classList.add('hidden');
                 nextBtn.classList.add('hidden');
                 return;
             }
+
+            // 非拍照日：隐藏操作按钮
+            photoActions.classList.add('hidden');
 
             if (items.length === 0) {
                 const msg = textDay ? textDay.text : '📷 还没有照片哦～';
